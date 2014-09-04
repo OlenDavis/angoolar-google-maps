@@ -1,0 +1,73 @@
+<div>
+
+	<div
+		t-lookahead-input  ="result in AddressInputController.$results"
+		placeholder        ="{{ placeholder }}"
+		items-changing     ="AddressInputController.searching"
+		input-value        ="query"
+		track-by           ="result.geometry.location.toString()"
+		on-selected        ="AddressInputController.select( result )"
+		is-focused         ="isFocused"
+		item-active        ="resultActive({ result: result })"
+		current-item       ="AddressInputController.$currentResult"
+		input-class        ="'t-rounded'"
+		hide-when-selected ="true"
+		name               ="{{ name }}"
+		ng-model-options   ="{
+			updateOn: 'default blur',
+			debounce: {
+				default: 500,
+				blur   : 0
+			}
+		}"
+	>
+		<div class="less lr-padded">
+
+			<span ng-if="result.formatted_address">
+				{{ result.formatted_address }}
+			</span>
+
+			<span
+				class ="italic light-weight"
+				ng-if ="! result.formatted_address"
+			>
+				No Address ({{ result.geometry.location.lat() }}, {{ result.geometry.location.lng() }})
+			</span>
+
+		</div>
+	</div>
+
+	<div
+		class="shallow-shadow"
+
+		t-fixed-proportion-div
+		ratio-width  ="{{ ratioWidth }}"
+		ratio-height ="{{ ratioHeight }}"
+	>
+		<div
+			class        ="absolute tl whole-width whole-height"
+			center       ="AddressInputController.$currentResult.geometry.location"
+			t-google-map ="
+				with marker options AddressInputController.getMarkerOptions( result )
+				with info window
+				for result in AddressInputController.$results track by AddressInputController.getTrackBy( result )
+			"
+		>
+			<span ng-click="AddressInputController.select( result )">
+
+				<span ng-if="result.formatted_address">
+					{{ result.formatted_address }}
+				</span>
+
+				<span
+					class ="italic light-weight"
+					ng-if ="! result.formatted_address"
+				>
+					No Address ({{ result.geometry.location.lat() }}, {{ result.geometry.location.lng() }})
+				</span>
+
+			</span>
+		</div>
+	</div>
+
+</div>
