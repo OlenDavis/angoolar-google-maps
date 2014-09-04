@@ -1,0 +1,265 @@
+<!DOCTYPE html><html lang="en"><head><title>directives/800_google_map.tail</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="directives/800_google_map.tail"><meta name="groc-project-path" content="coffee/directives/800_google_map.tail.coffee"><meta name="groc-github-url" content="https://github.com/OlenDavis/angoolar-google-maps"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/OlenDavis/angoolar-google-maps/blob/master/coffee/directives/800_google_map.tail.coffee">coffee/directives/800_google_map.tail.coffee</a></div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nx">angoolar</span><span class="p">.</span><span class="nx">addDirective</span> <span class="k">class</span> <span class="nx">GoogleMap</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirective</span>
+  <span class="nv">$_name: </span><span class="s">&#39;GoogleMap&#39;</span>
+
+  <span class="nv">transclude: </span><span class="kc">yes</span>
+
+  <span class="nv">scope:</span>
+    <span class="nv">apiKey         : </span><span class="s">&#39;@&#39;</span>
+    <span class="nv">options        : </span><span class="s">&quot;=?&quot;</span>
+    <span class="nv">center         : </span><span class="s">&#39;=?&#39;</span> <span class="c1"># must be an instance of either google.maps.LatLng or angoolar.LatLng</span>
+    <span class="nv">zoom           : </span><span class="s">&#39;=?&#39;</span>
+    <span class="nv">bounds         : </span><span class="s">&#39;=?&#39;</span>
+    <span class="nv">currentLocation: </span><span class="s">&#39;=?&#39;</span> <span class="c1"># boolean - if true, center will be updated to the browser&#39;s current location (if possible)</span>
+
+  <span class="nv">controller: </span><span class="k">class</span> <span class="nx">GoogleMapController</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirectiveController</span>
+    <span class="nv">$_name: </span><span class="s">&#39;GoogleMapController&#39;</span>
+
+    <span class="nv">$_dependencies: </span><span class="p">[</span>
+      <span class="s">&#39;$q&#39;</span>
+      <span class="s">&#39;$log&#39;</span>
+      <span class="s">&#39;$compile&#39;</span>
+      <span class="s">&#39;$parse&#39;</span>
+      <span class="nx">angoolar</span><span class="p">.</span><span class="nx">GoogleMapsApi</span>
+      <span class="nx">angoolar</span><span class="p">.</span><span class="nx">Geolocation</span>
+    <span class="p">]</span>
+
+    <span class="nv">$defaultOptions:</span>
+      <span class="nv">center: </span><span class="k">new</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span> <span class="mf">34.0364327</span><span class="p">,</span> <span class="o">-</span><span class="mf">118.329335</span> <span class="c1"># Los Angeles, CA</span>
+      <span class="nv">zoom  : </span><span class="mi">10</span>
+
+    <span class="nv">constructor: </span><span class="nf">-&gt;</span>
+      <span class="k">super</span>
+
+      <span class="nv">unwatchApiKey = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;apiKey&#39;</span><span class="p">,</span> <span class="o">=&gt;</span>
+        <span class="nx">@GoogleMapsApi</span><span class="p">.</span><span class="nx">initialize</span> <span class="nx">@mapsReady</span><span class="p">,</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">apiKey</span>
+        <span class="nx">unwatchApiKey</span><span class="p">()</span>
+
+        <span class="nv">defaultPositionWatch = </span><span class="nx">@Geolocation</span><span class="p">.</span><span class="nx">watchPosition</span> <span class="nf">( position ) =&gt;</span>
+          <span class="nx">defaultPositionWatch</span><span class="p">.</span><span class="nx">$_clearWatch</span><span class="p">()</span>
+          <span class="k">unless</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">center</span>
+            <span class="vi">@$scope.center = </span><span class="k">new</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">latitude</span><span class="p">,</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">longitude</span>
+
+    <span class="nv">mapsReady: </span><span class="o">=&gt;</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;options&#39;</span><span class="p">,</span>                  <span class="nx">@optionsChanged</span><span class="p">,</span> <span class="kc">yes</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;center || options.center&#39;</span><span class="p">,</span> <span class="nx">@centerChanged</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;zoom   || options.zoom&#39;</span><span class="p">,</span>   <span class="nx">@zoomChanged</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;bounds || options.bounds&#39;</span><span class="p">,</span> <span class="nx">@boundsChanged</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;currentLocation&#39;</span><span class="p">,</span>          <span class="nx">@currentLocationChanged</span>
+
+      <span class="nv">unwatchMap = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@map</span> <span class="p">),</span> <span class="o">=&gt;</span>
+        <span class="k">if</span> <span class="nx">@map</span>
+          <span class="nx">unwatchMap</span><span class="p">()</span>
+          <span class="vi">@$openInfoWindows = </span><span class="k">new</span> <span class="nb">Array</span><span class="p">()</span>
+          <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">event</span><span class="p">.</span><span class="nx">addListener</span> <span class="nx">@map</span><span class="p">,</span> <span class="s">&#39;click&#39;</span><span class="p">,</span> <span class="nx">@closeInfoWindows</span>
+          <span class="nx">@watchGoogleMapsExpression</span><span class="p">()</span>
+
+    <span class="nv">optionsChanged: </span><span class="o">=&gt;</span>
+      <span class="k">unless</span> <span class="nx">@map</span>
+        <span class="vi">@map = </span><span class="k">new</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">Map</span> <span class="nx">@$element</span><span class="p">[</span> <span class="mi">0</span> <span class="p">],</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">@$defaultOptions</span><span class="p">,</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">options</span>
+      <span class="k">else</span>
+        <span class="nx">@map</span><span class="p">.</span><span class="nx">setOptions</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{},</span> <span class="nx">@$defaultOptions</span><span class="p">,</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">options</span>
+
+    <span class="nv">centerChanged: </span><span class="nf">( center ) =&gt;</span>
+      <span class="k">if</span> <span class="nx">center</span> <span class="k">instanceof</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">LatLng</span> <span class="o">or</span> <span class="nx">center</span> <span class="k">instanceof</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span>
+        <span class="nx">@map</span><span class="p">.</span><span class="nx">panTo</span> <span class="nx">center</span>
+
+    <span class="nv">zoomChanged: </span><span class="nf">( zoom ) =&gt;</span> <span class="nx">@map</span><span class="p">.</span><span class="nx">setZoom</span> <span class="nx">zoom</span> <span class="k">if</span> <span class="nx">zoom</span>
+
+    <span class="nv">boundsChanged: </span><span class="nf">( bounds ) =&gt;</span>
+      <span class="k">if</span> <span class="nx">bounds</span> <span class="k">instanceof</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">LatLngBounds</span> <span class="o">or</span> <span class="nx">bounds</span> <span class="k">instanceof</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLngBounds</span>
+        <span class="nx">@map</span><span class="p">.</span><span class="nx">panToBounds</span> <span class="k">if</span> <span class="nx">bounds</span> <span class="k">instanceof</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">LatLngBounds</span> <span class="k">then</span> <span class="nx">bounds</span> <span class="k">else</span> <span class="nx">bounds</span><span class="p">.</span><span class="nx">getGoogleVersion</span><span class="p">()</span>
+
+    <span class="nv">currentLocationChanged: </span><span class="o">=&gt;</span>
+      <span class="k">if</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">currentLocation</span>
+        <span class="vi">@$currentPositionWatch = </span><span class="nx">@Geolocation</span><span class="p">.</span><span class="nx">watchPosition</span> <span class="nf">( position ) =&gt;</span>
+          <span class="vi">@$scope.center = </span><span class="k">new</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">latitude</span><span class="p">,</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">longitude</span> <span class="k">if</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">currentLocation</span>
+      <span class="k">else</span>
+        <span class="nx">@$currentPositionWatch</span><span class="o">?</span><span class="p">.</span><span class="nx">$_clearWatch</span><span class="p">()</span>
+
+    <span class="nv">wholeRegex = </span><span class="sr">/^\s*(with\s+marker\s+(?:options\s+([\s\S]+?)\s+)?(?:if\s+([\s\S]+?)\s+)?)?(with\s+info\s+window\s+(?:if\s+([\s\S]+?)\s+)?)?for\s+([\s\S]+?)\s*$/</span>
+    <span class="nv">wholeErrorMessage = </span><span class="s">&quot;Google Maps expression expected to be of the form &#39;[with marker [options _marker_options_expression_] [if _marker_condition_expression_]] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_&#39; but got: &quot;</span>
+    <span class="nv">ngRepeatRegex = </span><span class="sr">/^\s*([\s\S]+?)\s+in\s+([\s\S]+?)\s*$/</span>
+    <span class="nv">ngRepeatLhsRegex = </span><span class="sr">/^(?:([\$\w]+)|\(([\$\w]+)\s*,\s*([\$\w]+)\))$/</span>
+    <span class="nv">ngRepeatErrorMessage = </span><span class="s">&quot;&#39;_item_&#39; in &#39;_item_ in _collection_&#39; in &#39;_ng_repeat_expression_&#39; in &#39;marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_&#39; should be an identifier or &#39;(_key_, _value_)&#39; expression, but got: &quot;</span>
+    <span class="nv">watchGoogleMapsExpression: </span><span class="nf">-&gt;</span>
+      <span class="nv">expression = </span><span class="nx">@$attrs</span><span class="p">[</span> <span class="nx">GoogleMap</span><span class="o">::</span><span class="nx">$_makeName</span><span class="p">()</span> <span class="p">]</span>
+      <span class="k">return</span> <span class="k">unless</span> <span class="nx">expression</span><span class="o">?</span><span class="p">.</span><span class="nx">length</span>
+
+      <span class="nv">matches = </span><span class="nx">expression</span><span class="p">.</span><span class="nx">match</span> <span class="nx">wholeRegex</span>
+
+      <span class="k">unless</span> <span class="nx">matches</span>
+        <span class="k">return</span> <span class="nx">@$log</span><span class="p">.</span><span class="nx">error</span> <span class="nx">wholeErrorMessage</span> <span class="o">+</span> <span class="nx">expression</span>
+
+      <span class="vi">@withMarker                          = </span><span class="k">if</span> <span class="nx">matches</span><span class="p">[</span> <span class="mi">1</span> <span class="p">]</span> <span class="k">then</span> <span class="kc">yes</span> <span class="k">else</span> <span class="kc">no</span>
+      <span class="vi">@markerOptionsExpression             = </span><span class="nx">matches</span><span class="p">[</span>    <span class="mi">2</span> <span class="p">]</span>
+      <span class="vi">@markerConditionalExpression         = </span><span class="nx">matches</span><span class="p">[</span>    <span class="mi">3</span> <span class="p">]</span>
+      <span class="vi">@withInfoWindow                      = </span><span class="k">if</span> <span class="nx">matches</span><span class="p">[</span> <span class="mi">4</span> <span class="p">]</span> <span class="k">then</span> <span class="kc">yes</span> <span class="k">else</span> <span class="kc">no</span>
+      <span class="vi">@withInfoWindowConditionalExpression = </span><span class="nx">matches</span><span class="p">[</span>    <span class="mi">5</span> <span class="p">]</span>
+      <span class="nv">ngRepeatExpression                   = </span><span class="nx">matches</span><span class="p">[</span>    <span class="mi">6</span> <span class="p">]</span>
+
+      <span class="k">unless</span> <span class="nx">@markerOptionsExpression</span>
+        <span class="nv">ngRepeatMatches = </span><span class="nx">ngRepeatExpression</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span> <span class="nx">ngRepeatRegex</span> <span class="p">)</span><span class="o">?</span><span class="p">[</span> <span class="mi">1</span> <span class="p">]</span><span class="o">?</span><span class="p">.</span><span class="nx">match</span> <span class="nx">ngRepeatLhsRegex</span>
+        <span class="k">unless</span> <span class="nx">ngRepeatMatches</span>
+          <span class="k">return</span> <span class="nx">@$log</span><span class="p">.</span><span class="nx">error</span> <span class="nx">ngRepeatErrorMessage</span> <span class="o">+</span> <span class="nx">ngRepeatExpression</span>
+        <span class="vi">@ngRepeatItemGetter = </span><span class="nx">@$parse</span> <span class="nx">ngRepeatMatches</span><span class="p">[</span> <span class="mi">2</span> <span class="p">]</span> <span class="o">or</span> <span class="nx">ngRepeatMatches</span><span class="p">[</span> <span class="mi">1</span> <span class="p">]</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>marker expression of the form "with marker [options <em>marker</em>options<em>expression</em>] [if <em>marker</em>condition<em>expression</em>] [with info window [if <em>info</em>window<em>condition</em>expression<em>]] for _ng</em>repeat<em>expression</em>"
+The following are all examples of valid marker expressions:
+ex01: "with marker options <em>marker</em>options<em>expression</em> if <em>marker</em>condition<em>expression</em> with info window if <em>info</em>window<em>condition</em>expression_ for <em>ng</em>repeat<em>expression</em>"
+ex02: "for <em>ng</em>repeat<em>expression</em>"
+ex03: "with marker for <em>ng</em>repeat<em>expression</em>"
+ex04: "with marker options <em>marker</em>options<em>expression</em> for <em>ng</em>repeat<em>expression</em>"
+ex05: "with marker options <em>marker</em>options<em>expression</em> if <em>marker</em>condition<em>expression</em> for <em>ng</em>repeat<em>expression</em>"
+ex06: "with marker if <em>marker</em>condition<em>expression</em> for <em>ng</em>repeat<em>expression</em>"
+ex07: "with marker with info window for <em>ng</em>repeat<em>expression</em>"
+ex08: "with marker with info window if <em>info</em>window<em>condition</em>expression_ for <em>ng</em>repeat<em>expression</em>"
+ex09: "with marker options <em>marker</em>options<em>expression</em> with info window if <em>info</em>window<em>condition</em>expression_ for <em>ng</em>repeat<em>expression</em>"
+ex10: "with marker options <em>marker</em>options<em>expression</em> with info window for <em>ng</em>repeat<em>expression</em>"
+ex11: "with marker options <em>marker</em>options<em>expression</em> if <em>marker</em>condition<em>expression</em> with info window for <em>ng</em>repeat<em>expression</em>"
+etc.</p></div></div><div class="code"><div class="wrapper">      
+      <span class="k">unless</span> <span class="nx">ngRepeatExpression</span>
+        <span class="k">return</span> <span class="nx">@$log</span><span class="p">.</span><span class="nx">error</span> <span class="nx">wholeErrorMessage</span> <span class="o">+</span> <span class="nx">expression</span>
+
+      <span class="nx">@$element</span><span class="p">.</span><span class="nx">append</span> <span class="nv">$googleMapsContentsElement = </span><span class="nx">angular</span><span class="p">.</span><span class="nx">element</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">      &lt;div</span>
+<span class="s">        style     =&#39;display:none!important&#39;</span>
+<span class="s">        ng-repeat =\&quot;</span><span class="si">#{</span> <span class="nx">ngRepeatExpression</span> <span class="si">}</span><span class="s">\&quot;</span>
+<span class="s">      &gt;</span>
+<span class="s">        &lt;div </span><span class="si">#{</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">camelToDashes</span> <span class="nx">GoogleMapContent</span><span class="o">::</span><span class="nx">$_makeName</span><span class="p">()</span> <span class="si">}</span><span class="s">&gt;&lt;/div&gt;</span>
+<span class="s">      &lt;/div&gt;</span>
+<span class="s">      &quot;&quot;&quot;</span>
+      <span class="nx">@$compile</span><span class="p">(</span> <span class="nx">$googleMapsContentsElement</span> <span class="p">)</span> <span class="nv">googleMapsContentsScope = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$parent</span><span class="p">.</span><span class="nx">$new</span><span class="p">()</span>
+
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$on</span> <span class="s">&#39;$destroy&#39;</span><span class="p">,</span> <span class="o">=&gt;</span> <span class="nx">googleMapsContentsScope</span><span class="p">.</span><span class="nx">$destroy</span><span class="p">()</span>
+
+    <span class="nv">closeInfoWindows: </span><span class="o">=&gt;</span>
+      <span class="nx">openInfoWindow</span><span class="p">.</span><span class="nx">close</span><span class="p">()</span> <span class="k">for</span> <span class="nx">openInfoWindow</span> <span class="k">in</span> <span class="nx">@$openInfoWindows</span>
+      <span class="vi">@$openInfoWindows.length = </span><span class="mi">0</span>
+
+    <span class="nv">showInfoWindow: </span><span class="nf">( infoWindow, marker ) -&gt;</span>
+      <span class="nx">@closeInfoWindows</span><span class="p">()</span>
+      <span class="nx">@$openInfoWindows</span><span class="p">.</span><span class="nx">push</span> <span class="nx">infoWindow</span>
+      <span class="nx">infoWindow</span><span class="p">.</span><span class="nx">open</span> <span class="nx">@map</span><span class="p">,</span> <span class="nx">marker</span>
+
+<span class="nx">angoolar</span><span class="p">.</span><span class="nx">addDirective</span> <span class="k">class</span> <span class="nx">GoogleMapContent</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirective</span>
+  <span class="nv">$_name: </span><span class="s">&#39;GoogleMapContent&#39;</span>
+
+  <span class="nv">$_requireParents: </span><span class="p">[</span> <span class="nx">GoogleMap</span> <span class="p">]</span>
+
+  <span class="nv">scope: </span><span class="kc">yes</span>
+
+  <span class="nv">controller: </span><span class="k">class</span> <span class="nx">GoogleMapContentController</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirectiveController</span>
+    <span class="nv">$_name: </span><span class="s">&#39;GoogleMapContentController&#39;</span>
+
+    <span class="nv">$_link: </span><span class="nf">-&gt;</span>
+      <span class="k">super</span>
+
+      <span class="nx">@setupMarker</span><span class="p">()</span>
+      <span class="nx">@setupInfoWindow</span><span class="p">()</span>
+
+    <span class="nv">setupMarker: </span><span class="nf">-&gt;</span>
+      <span class="k">if</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">withMarker</span>
+        <span class="k">if</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">markerConditionalExpression</span>
+          <span class="vi">@unwatchWithMarkerConditionalExpression = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">markerConditionalExpression</span><span class="p">,</span> <span class="nf">( @withMarker ) -&gt;</span>
+            <span class="k">if</span> <span class="nx">withMarker</span>
+              <span class="nx">@attachMarker</span><span class="p">()</span>
+            <span class="k">else</span>
+              <span class="nx">@detachMarker</span><span class="p">()</span>
+        <span class="k">else</span>
+          <span class="vi">@withMarker = </span><span class="kc">yes</span>
+          <span class="nx">@attachMarker</span><span class="p">()</span>
+
+        <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$on</span> <span class="s">&#39;$destroy&#39;</span><span class="p">,</span> <span class="nx">@destroyMarker</span>
+
+    <span class="nv">attachMarker: </span><span class="o">=&gt;</span>
+      <span class="k">if</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">markerOptionsExpression</span>
+        <span class="vi">@unwatchWithMarkerOptionsWatch = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span><span class="p">(</span>
+          <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">markerOptionsExpression</span>
+
+          <span class="nf">( markerOptions ) =&gt;</span>
+            <span class="k">if</span> <span class="nx">markerOptions</span> <span class="c1"># if the options expression evaluates to a promise, then it will be null till it&#39;s resolved</span>
+              <span class="nv">actualMarkerOptions = </span><span class="nx">angular</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{</span> <span class="nv">position: </span><span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">map</span><span class="p">.</span><span class="nx">getCenter</span><span class="p">()</span> <span class="p">},</span> <span class="nx">markerOptions</span><span class="p">,</span> <span class="nv">map: </span><span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">map</span>
+              <span class="k">if</span> <span class="nx">@marker</span>
+                <span class="nx">@marker</span><span class="p">.</span><span class="nx">setOptions</span> <span class="nx">actualMarkerOptions</span>
+              <span class="k">else</span>
+                <span class="vi">@marker = </span><span class="k">new</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">Marker</span> <span class="nx">actualMarkerOptions</span>
+
+          <span class="kc">yes</span>
+        <span class="p">)</span>
+      <span class="k">else</span>
+        <span class="vi">@marker = </span><span class="k">new</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">Marker</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">extend</span> <span class="p">{</span> <span class="nv">position: </span><span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">map</span><span class="p">.</span><span class="nx">getCenter</span><span class="p">()</span> <span class="p">},</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">ngRepeatItemGetter</span><span class="p">(</span> <span class="nx">@$scope</span> <span class="p">),</span> <span class="nv">map: </span><span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">map</span>
+
+    <span class="nv">detachMarker: </span><span class="o">=&gt;</span>
+      <span class="nx">@marker</span><span class="o">?</span><span class="p">.</span><span class="nx">setMap</span> <span class="kc">null</span>
+
+    <span class="nv">destroyMarker: </span><span class="o">=&gt;</span>
+      <span class="nx">@unwatchWithMarkerConditionalExpression</span><span class="o">?</span><span class="p">()</span>
+      <span class="nx">@unwatchWithMarkerOptionsWatch</span><span class="o">?</span><span class="p">()</span>
+      <span class="nx">@marker</span><span class="o">?</span><span class="p">.</span><span class="nx">setMap</span> <span class="kc">null</span>
+      <span class="vi">@marker = </span><span class="kc">null</span>
+
+    <span class="nv">setupInfoWindow: </span><span class="nf">-&gt;</span>
+      <span class="k">if</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">withInfoWindow</span>
+        <span class="vi">@infoWindowScope = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$parent</span><span class="p">.</span><span class="nx">$new</span><span class="p">()</span>
+
+        <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">$transclude</span> <span class="nx">@infoWindowScope</span><span class="p">,</span> <span class="nf">( $infoWindowContents ) =&gt;</span>
+          <span class="vi">@$infoWindowElement = </span><span class="nx">angular</span><span class="p">.</span><span class="nx">element</span><span class="p">(</span> <span class="s">&#39;&lt;div&gt;&lt;/div&gt;&#39;</span> <span class="p">).</span><span class="nx">append</span> <span class="nx">$infoWindowContents</span>
+          <span class="nx">@attachInfoWindow</span><span class="p">()</span>
+
+        <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$on</span> <span class="s">&#39;$destroy&#39;</span><span class="p">,</span> <span class="nx">@destroyInfoWindow</span>
+
+    <span class="nv">attachInfoWindow: </span><span class="o">=&gt;</span>
+      <span class="vi">@infoWindow = </span><span class="k">new</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">InfoWindow</span> <span class="p">{</span>
+        <span class="nv">position: </span><span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">map</span><span class="p">.</span><span class="nx">getCenter</span><span class="p">()</span>
+        <span class="nv">content : </span><span class="nx">@$infoWindowElement</span><span class="p">[</span> <span class="mi">0</span> <span class="p">]</span>
+      <span class="p">}</span>
+
+      <span class="k">if</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">withInfoWindowConditionalExpression</span>
+        <span class="vi">@unwatchInfoWindowConditionalExpressionWithMarker = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watchGroup</span><span class="p">(</span>
+          <span class="p">[</span>
+            <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">withInfoWindowConditionalExpression</span>
+            <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@withMarker</span> <span class="o">and</span> <span class="nx">@marker</span> <span class="p">)</span> <span class="c1"># since the marker&#39;s options may be a promise, just because @withMarker is true, doesn&#39;t mean the marker can be attached to</span>
+          <span class="p">]</span>
+
+          <span class="nf">( args ) =&gt;</span>
+            <span class="p">[</span> <span class="nx">withInfoWindow</span><span class="p">,</span> <span class="nx">withMarker</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">args</span>
+
+            <span class="k">if</span> <span class="nx">withMarker</span> <span class="c1"># if with marker, then with info window indicates it&#39;s ABLE to be shown by clicking on the marker</span>
+              <span class="k">if</span> <span class="nx">withInfoWindow</span>
+                <span class="nx">@attachInfoWindowToMarker</span><span class="p">()</span>
+              <span class="k">else</span>
+                <span class="nx">@hideInfoWindow</span><span class="p">()</span>
+                <span class="nx">@detachInfoWindowFromMarker</span><span class="p">()</span>
+            <span class="k">else</span> <span class="c1"># whereas if it&#39;s not with marker, then with info window indicates directly that it&#39;s shown or closed</span>
+              <span class="nx">@detachInfoWindowFromMarker</span><span class="p">()</span>
+              <span class="k">if</span> <span class="nx">withInfoWindow</span>
+                <span class="nx">@showInfoWindow</span><span class="p">()</span>
+              <span class="k">else</span>
+                <span class="nx">@hideInfoWindow</span><span class="p">()</span>
+        <span class="p">)</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">withMarker</span>
+        <span class="vi">@unwatchInfoWindowWithMarker = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@withMarker</span> <span class="o">and</span> <span class="nx">@marker</span> <span class="p">),</span> <span class="nf">( withMarker ) =&gt;</span> <span class="c1"># since the marker&#39;s options may be a promise, just because @withMarker is true, doesn&#39;t mean the marker can be attached to</span>
+          <span class="k">if</span> <span class="nx">withMarker</span> <span class="c1"># if with marker, then with info window indicates it&#39;s ABLE to be shown by clicking on the marker</span>
+            <span class="nx">@attachInfoWindowToMarker</span><span class="p">()</span>
+          <span class="k">else</span>
+            <span class="nx">@hideInfoWindow</span><span class="p">()</span>
+            <span class="nx">@detachInfoWindowFromMarker</span><span class="p">()</span>
+      <span class="k">else</span>
+        <span class="nx">@showInfoWindow</span><span class="p">()</span>
+
+    <span class="nv">attachInfoWindowToMarker: </span><span class="nf">-&gt;</span>
+      <span class="vi">@infoWindowListener = </span><span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">event</span><span class="p">.</span><span class="nx">addListener</span> <span class="nx">@marker</span><span class="p">,</span> <span class="s">&#39;click&#39;</span><span class="p">,</span> <span class="nx">@showInfoWindow</span>
+
+    <span class="nv">detachInfoWindowFromMarker: </span><span class="nf">-&gt;</span>
+      <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">event</span><span class="p">.</span><span class="nx">removeListener</span> <span class="nx">@infoWindowListener</span> <span class="k">if</span> <span class="nx">@infoWindowListener</span>
+
+    <span class="nv">showInfoWindow: </span><span class="o">=&gt;</span>
+      <span class="nx">@GoogleMapController</span><span class="p">.</span><span class="nx">showInfoWindow</span> <span class="nx">@infoWindow</span><span class="p">,</span> <span class="k">if</span> <span class="nx">@withMarker</span> <span class="k">then</span> <span class="nx">@marker</span> <span class="k">else</span> <span class="kc">null</span>
+
+    <span class="nv">hideInfoWindow: </span><span class="o">=&gt;</span>
+      <span class="nx">@infoWindow</span><span class="p">.</span><span class="nx">close</span><span class="p">()</span>
+
+    <span class="nv">destroyInfoWindow: </span><span class="o">=&gt;</span>
+      <span class="nx">@detachInfoWindowFromMarker</span><span class="p">()</span>
+      <span class="nx">@unwatchInfoWindowWithMarker</span><span class="o">?</span><span class="p">()</span>
+      <span class="nx">@unwatchInfoWindowConditionalExpressionWithMarker</span><span class="o">?</span><span class="p">()</span>
+      <span class="nx">@infoWindowScope</span><span class="o">?</span><span class="p">.</span><span class="nx">$destroy</span><span class="p">()</span>
+      <span class="vi">@infoWindowScope = </span><span class="kc">null</span></div></div></div></div></body></html>

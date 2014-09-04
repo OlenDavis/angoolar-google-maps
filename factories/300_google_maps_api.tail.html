@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><title>factories/300_google_maps_api.tail</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="factories/300_google_maps_api.tail"><meta name="groc-project-path" content="coffee/factories/300_google_maps_api.tail.coffee"><meta name="groc-github-url" content="https://github.com/OlenDavis/angoolar-google-maps"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/OlenDavis/angoolar-google-maps/blob/master/coffee/factories/300_google_maps_api.tail.coffee">coffee/factories/300_google_maps_api.tail.coffee</a></div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nx">angoolar</span><span class="p">.</span><span class="nx">addFactory</span> <span class="k">class</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">GoogleMapsApi</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseFactory</span>
+  <span class="nv">$_name: </span><span class="s">&#39;GoogleMapsApi&#39;</span>
+
+  <span class="nv">$_dependencies: </span><span class="p">[</span> <span class="s">&#39;$q&#39;</span> <span class="p">]</span>
+
+  <span class="nv">constructor: </span><span class="nf">-&gt;</span>
+    <span class="k">super</span>
+
+    <span class="vi">@$geocoderResultsCache  = </span><span class="p">{}</span> <span class="c1"># keys are GeocoderRequest objects stringified, values are the GeocoderResult arrays for each such request</span>
+
+  <span class="nv">initialize: </span><span class="nf">( callback, apiKey, sensor = true ) -&gt;</span>
+    <span class="k">if</span> <span class="nx">google</span><span class="o">?</span><span class="p">.</span><span class="nx">maps</span><span class="o">?</span>
+      <span class="vi">@$promise = </span><span class="nx">@$q</span><span class="p">.</span><span class="nx">when</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span>
+    <span class="k">else</span> <span class="k">unless</span> <span class="nx">@$promise</span><span class="o">?</span>
+      <span class="nv">deferred = </span><span class="nx">@$q</span><span class="p">.</span><span class="nx">defer</span><span class="p">()</span>
+      <span class="vi">@$promise = </span><span class="nx">deferred</span><span class="p">.</span><span class="nx">promise</span>
+
+      <span class="nv">internalCallback = </span><span class="s">&quot;GoogleMapsApiCallback</span><span class="si">#{</span> <span class="p">(</span> <span class="s">&#39;&#39;</span> <span class="o">+</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">random</span><span class="p">()</span> <span class="p">).</span><span class="nx">slice</span> <span class="mi">2</span> <span class="si">}</span><span class="s">&quot;</span>
+      <span class="nb">window</span><span class="p">[</span> <span class="nx">internalCallback</span> <span class="p">]</span> <span class="o">=</span> <span class="nf">-&gt;</span> <span class="nx">deferred</span><span class="p">.</span><span class="nx">resolve</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span>
+
+      <span class="nv">script = </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span> <span class="s">&#39;script&#39;</span>
+      <span class="nv">script.type = </span><span class="s">&#39;text/javascript&#39;</span>
+      <span class="nv">script.src = </span><span class="s">&quot;https://maps.googleapis.com/maps/api/js?callback=</span><span class="si">#{</span> <span class="nx">internalCallback</span> <span class="si">}</span><span class="s">&amp;sensor=</span><span class="si">#{</span> <span class="nx">sensor</span> <span class="si">}</span><span class="s">&quot;</span>
+      <span class="k">if</span> <span class="nx">apiKey</span>
+        <span class="nx">script</span><span class="p">.</span><span class="nx">src</span> <span class="o">+=</span> <span class="s">&quot;&amp;key=</span><span class="si">#{</span> <span class="nx">apiKey</span> <span class="si">}</span><span class="s">&quot;</span>
+
+      <span class="nv">$document = </span><span class="nx">angular</span><span class="p">.</span><span class="nx">element</span> <span class="nb">document</span>
+      <span class="k">if</span> <span class="nb">document</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">is</span> <span class="s">&#39;interactive&#39;</span> <span class="o">or</span> <span class="nb">document</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">is</span> <span class="s">&#39;complete&#39;</span>
+        <span class="nx">$document</span><span class="p">.</span><span class="nx">append</span> <span class="nx">script</span>
+      <span class="k">else</span>
+        <span class="nx">$document</span><span class="p">.</span><span class="nx">bind</span> <span class="s">&#39;ready&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">$document</span><span class="p">.</span><span class="nx">append</span> <span class="nx">script</span>
+    
+    <span class="nx">@$promise</span><span class="p">.</span><span class="nx">then</span> <span class="nf">( maps ) -&gt;</span>
+      <span class="nx">callback</span><span class="o">?</span> <span class="nx">maps</span>
+      <span class="nx">maps</span>
+
+  <span class="nv">geocodeAddress        : </span><span class="nf">( address ) -&gt;</span> <span class="nx">@geocode</span> <span class="p">{</span> <span class="nv">address: </span><span class="nx">address</span> <span class="p">}</span>
+  <span class="nv">geocodeAddressToFirst : </span><span class="nf">( address ) -&gt;</span> <span class="nx">@geocode</span> <span class="p">{</span> <span class="nv">address: </span><span class="nx">address</span> <span class="p">},</span> <span class="nf">( results ) -&gt;</span> <span class="nx">results</span><span class="p">[</span> <span class="mi">0</span> <span class="p">]</span>
+  <span class="nv">geocodeAddressToLatLng: </span><span class="nf">( address ) -&gt;</span> <span class="nx">@geocode</span> <span class="p">{</span> <span class="nv">address: </span><span class="nx">address</span> <span class="p">},</span> <span class="nf">( results ) -&gt;</span> <span class="nx">results</span><span class="p">[</span> <span class="mi">0</span> <span class="p">].</span><span class="nx">geometry</span><span class="p">.</span><span class="nx">location</span>
+
+  <span class="nv">geocode: </span><span class="p">(</span> <span class="nx">geocoderRequest</span><span class="p">,</span> <span class="nv">extractResult = </span><span class="nf">( results ) -&gt;</span> <span class="nx">results</span> <span class="p">)</span> <span class="nf">-&gt;</span> <span class="c1"># returns a promise that resolves to the first/top result (as extracted from it by the extractResult function) or is rejected with the failure status</span>
+    <span class="nx">@initialize</span><span class="p">().</span><span class="nx">then</span> <span class="o">=&gt;</span>
+      <span class="k">if</span> <span class="nv">cachedResults = </span><span class="nx">@$geocoderResultsCache</span><span class="p">[</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span> <span class="nx">geocoderRequest</span> <span class="p">]</span>
+        <span class="k">return</span> <span class="nx">@$q</span><span class="p">.</span><span class="nx">when</span> <span class="nx">extractResult</span> <span class="nx">cachedResults</span>
+
+      <span class="vi">@$geocoder = </span><span class="nx">@$geocoder</span> <span class="o">or</span> <span class="k">new</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">Geocoder</span><span class="p">()</span>
+
+      <span class="nv">deferred = </span><span class="nx">@$q</span><span class="p">.</span><span class="nx">defer</span><span class="p">()</span>
+      <span class="nx">@$geocoder</span><span class="p">.</span><span class="nx">geocode</span> <span class="nx">geocoderRequest</span><span class="p">,</span> <span class="nf">( results, status ) =&gt;</span>
+        <span class="k">if</span> <span class="nx">status</span> <span class="o">is</span> <span class="nx">google</span><span class="p">.</span><span class="nx">maps</span><span class="p">.</span><span class="nx">GeocoderStatus</span><span class="p">.</span><span class="nx">OK</span>
+          <span class="nx">@$geocoderResultsCache</span><span class="p">[</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span> <span class="nx">geocoderRequest</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">results</span>
+          <span class="nx">deferred</span><span class="p">.</span><span class="nx">resolve</span> <span class="nx">extractResult</span> <span class="nx">results</span>
+        <span class="k">else</span>
+          <span class="nx">deferred</span><span class="p">.</span><span class="nx">reject</span> <span class="nx">status</span>
+
+      <span class="nx">deferred</span><span class="p">.</span><span class="nx">promise</span></div></div></div></div></body></html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head><title>directives/800_address_input.tail</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="directives/800_address_input.tail"><meta name="groc-project-path" content="coffee/directives/800_address_input.tail.coffee"><meta name="groc-github-url" content="https://github.com/OlenDavis/angoolar-google-maps"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/OlenDavis/angoolar-google-maps/blob/master/coffee/directives/800_address_input.tail.coffee">coffee/directives/800_address_input.tail.coffee</a></div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nx">angoolar</span><span class="p">.</span><span class="nx">addDirective</span> <span class="k">class</span> <span class="nx">AddressInput</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseTemplatedDirective</span>
+  <span class="nv">$_name: </span><span class="s">&#39;AddressInput&#39;</span>
+
+  <span class="nv">scope:</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>This expression will be evaluated when a submission is selected with a context with that
+submission as 'submission' on it. See comment on onSelected in the LookaheadInput
+directive: If the expression results in a promise, if that promise is resolved, it will empty the
+input and hide the results. If it is rejected, the results will remain visible with the
+last selected submission still selected.</p></div></div><div class="code"><div class="wrapper">    <span class="nv">onSelected  : </span><span class="s">&#39;&amp;&#39;</span>
+    <span class="nv">query       : </span><span class="s">&quot;=?</span><span class="si">#{</span> <span class="nx">@</span><span class="o">::</span><span class="nx">$_makeName</span><span class="p">()</span> <span class="si">}</span><span class="s">&quot;</span>
+    <span class="nv">allResults  : </span><span class="s">&#39;=?&#39;</span>
+    <span class="nv">isFocused   : </span><span class="s">&#39;=?&#39;</span>
+    <span class="nv">resultActive: </span><span class="s">&#39;&amp;&#39;</span>
+    <span class="nv">placeholder : </span><span class="s">&#39;@&#39;</span>
+    <span class="nv">ratioWidth  : </span><span class="s">&#39;@&#39;</span>
+    <span class="nv">ratioHeight : </span><span class="s">&#39;@&#39;</span>
+    <span class="nv">name        : </span><span class="s">&#39;@&#39;</span>
+
+  <span class="nv">scopeDefaults:</span>
+    <span class="nv">placeholder: </span><span class="s">&#39;Address Search&#39;</span>
+    <span class="nv">ratioWidth : </span><span class="mi">16</span>
+    <span class="nv">ratioHeight: </span><span class="mi">9</span>
+
+  <span class="nv">controller: </span><span class="k">class</span> <span class="nx">AddressInputController</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirectiveController</span>
+    <span class="nv">$_name: </span><span class="s">&#39;AddressInputController&#39;</span>
+
+    <span class="nv">$_dependencies: </span><span class="p">[</span> <span class="s">&#39;$q&#39;</span><span class="p">,</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">GoogleMapsApi</span> <span class="p">]</span>
+
+    <span class="nv">constructor: </span><span class="nf">-&gt;</span>
+      <span class="k">super</span>
+
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;query&#39;</span><span class="p">,</span> <span class="nx">@doQuery</span>
+
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;AddressInputController.$results&#39;</span><span class="p">,</span> <span class="nf">( results ) =&gt;</span> <span class="vi">@$scope.allResults = </span><span class="nx">results</span>
+
+    <span class="nv">doQuery: </span><span class="nf">( query ) =&gt;</span>
+      <span class="k">return</span> <span class="vi">@$results = </span><span class="kc">null</span> <span class="k">unless</span> <span class="nx">query</span>
+      
+      <span class="vi">@searching = </span><span class="kc">yes</span>
+      <span class="vi">@$results = </span><span class="nx">@GoogleMapsApi</span><span class="p">.</span><span class="nx">geocodeAddress</span><span class="p">(</span> <span class="nx">query</span> <span class="p">).</span><span class="nx">then</span><span class="p">(</span>
+        <span class="nf">( @$results ) =&gt;</span>
+      <span class="p">).</span><span class="nx">finally</span> <span class="o">=&gt;</span> <span class="vi">@searching = </span><span class="kc">no</span>
+
+    <span class="nv">getMarkerOptions: </span><span class="nf">( result ) -&gt;</span>
+      <span class="k">if</span> <span class="nx">result</span><span class="p">.</span><span class="nx">geometry</span>
+        <span class="nv">position: </span><span class="nx">result</span><span class="p">.</span><span class="nx">geometry</span><span class="p">.</span><span class="nx">location</span>
+        <span class="nv">title   : </span><span class="nx">result</span><span class="p">.</span><span class="nx">formatted_address</span>
+        <span class="nv">visible : </span><span class="kc">yes</span>
+      <span class="k">else</span>
+        <span class="nv">visible: </span><span class="kc">no</span>
+
+    <span class="nv">idHack = </span><span class="mi">0</span>
+    <span class="nv">getTrackBy: </span><span class="nf">( result ) -&gt;</span>
+      <span class="nx">result</span><span class="o">?</span><span class="p">.</span><span class="nx">geometry</span><span class="o">?</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="o">or</span> <span class="o">++</span><span class="nx">idHack</span>
+
+    <span class="nv">select: </span><span class="nf">( result ) -&gt;</span>
+      <span class="nv">address_components = </span><span class="p">{}</span>
+      <span class="k">if</span> <span class="nx">result</span><span class="p">.</span><span class="nx">address_components</span><span class="o">?</span>
+        <span class="k">for</span> <span class="nx">address_component</span> <span class="k">in</span> <span class="nx">result</span><span class="p">.</span><span class="nx">address_components</span>
+          <span class="nx">address_components</span><span class="p">[</span> <span class="nx">address_component</span><span class="p">.</span><span class="nx">types</span><span class="p">[</span> <span class="mi">0</span> <span class="p">]</span> <span class="p">]</span> <span class="o">=</span>
+            <span class="nv">long_name : </span><span class="nx">address_component</span><span class="p">.</span><span class="nx">long_name</span>
+            <span class="nv">short_name: </span><span class="nx">address_component</span><span class="p">.</span><span class="nx">short_name</span>
+
+      <span class="vi">@$scope.query = </span><span class="nx">result</span><span class="p">.</span><span class="nx">formatted_address</span> <span class="o">or</span> <span class="s">&quot;</span><span class="si">#{</span> <span class="nx">result</span><span class="p">.</span><span class="nx">geometry</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">lat</span><span class="p">()</span> <span class="si">}</span><span class="s">,</span><span class="si">#{</span> <span class="nx">result</span><span class="p">.</span><span class="nx">geometry</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">lng</span><span class="p">()</span> <span class="si">}</span><span class="s">&quot;</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">onSelected</span>
+        <span class="s">&#39;result&#39;</span>            <span class="o">:</span> <span class="nx">result</span>
+        <span class="s">&#39;address_components&#39;</span><span class="o">:</span> <span class="nx">address_components</span>
+      <span class="vi">@$scope.isFocused = </span><span class="kc">no</span></div></div></div></div></body></html>
