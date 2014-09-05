@@ -1,19 +1,105 @@
+# # GoogleMap
+# ## Example Usage (address-input.html)
+# 	<div>
+# 	
+# 		<div
+# 			t-lookahead-input  ="result in AddressInputController.$results"
+# 			placeholder        ="{{ placeholder }}"
+# 			items-changing     ="AddressInputController.searching"
+# 			input-value        ="query"
+# 			track-by           ="result.geometry.location.toString()"
+# 			on-selected        ="AddressInputController.select( result )"
+# 			is-focused         ="isFocused"
+# 			item-active        ="resultActive({ result: result })"
+# 			current-item       ="AddressInputController.$currentResult"
+# 			input-class        ="'t-rounded'"
+# 			hide-when-selected ="true"
+# 			name               ="{{ name }}"
+# 			ng-model-options   ="{
+# 				updateOn: 'default blur',
+# 				debounce: {
+# 					default: 500,
+# 					blur   : 0
+# 				}
+# 			}"
+# 		>
+# 			<div class="less lr-padded">
+# 	
+# 				<span ng-if="result.formatted_address">
+# 					{{ result.formatted_address }}
+# 				</span>
+# 	
+# 				<span
+# 					class ="italic light-weight"
+# 					ng-if ="! result.formatted_address"
+# 				>
+# 					No Address ({{ result.geometry.location.lat() }}, {{ result.geometry.location.lng() }})
+# 				</span>
+# 	
+# 			</div>
+# 		</div>
+# 	
+# 		<div
+# 			class="shallow-shadow"
+# 	
+# 			t-fixed-proportion-div
+# 			ratio-width  ="{{ ratioWidth }}"
+# 			ratio-height ="{{ ratioHeight }}"
+# 		>
+# 			<div
+# 				class        ="absolute tl whole-width whole-height"
+# 				center       ="AddressInputController.$currentResult.geometry.location"
+# 				t-google-map ="
+# 					with marker options AddressInputController.getMarkerOptions( result )
+# 					with info window
+# 					for result in AddressInputController.$results track by AddressInputController.getTrackBy( result )
+# 				"
+# 			>
+# 				<span ng-click="AddressInputController.select( result )">
+# 	
+# 					<span ng-if="result.formatted_address">
+# 						{{ result.formatted_address }}
+# 					</span>
+# 	
+# 					<span
+# 						class ="italic light-weight"
+# 						ng-if ="! result.formatted_address"
+# 					>
+# 						No Address ({{ result.geometry.location.lat() }}, {{ result.geometry.location.lng() }})
+# 					</span>
+# 	
+# 				</span>
+# 			</div>
+# 		</div>
+# 	
+# 	</div>
+
 angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 	$_name: 'GoogleMap'
 
+	# ### Transclude: true
+	# So we're transcluding.
 	transclude: yes
 
+	# ### Scope Attributes
+	# All these scope attributes are just gravy; not really necessary or integral to the meat and
+	# bones of the directive. More could and should be added, or they could all be eliminated for
+	# simplicity's sake.
 	scope:
 		apiKey         : '@'
 		options        : "=?"
-		center         : '=?' # must be an instance of either google.maps.LatLng or angoolar.LatLng
+		# must be an instance of either google.maps.LatLng or angoolar.LatLng
+		center         : '=?'
 		zoom           : '=?'
 		bounds         : '=?'
-		currentLocation: '=?' # boolean - if true, center will be updated to the browser's current location (if possible)
+		# boolean - if true, center will be updated to the browser's current location (if possible)
+		currentLocation: '=?'
 
+	# ### GoogleMapController
 	controller: class GoogleMapController extends angoolar.BaseDirectiveController
 		$_name: 'GoogleMapController'
 
+		# #### Injected Angular Dependencies
 		$_dependencies: [
 			'$q'
 			'$log'
@@ -23,14 +109,19 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 			angoolar.Geolocation
 		]
 
+		# #### Map Default Options
 		$defaultOptions:
 			center: new angoolar.LatLng 34.0364327, -118.329335 # Los Angeles, CA
 			zoom  : 10
 
+		# #### Controller Initialization
+		# * First, we wait for the apiKey
+		# 	* only the first time (since we can't load the API multiple times)
 		constructor: ->
 			super
 
 			unwatchApiKey = @$scope.$watch 'apiKey', =>
+				# * This will call @mapsReady when the API has been loaded
 				@GoogleMapsApi.initialize @mapsReady, @$scope.apiKey
 				unwatchApiKey()
 
@@ -39,6 +130,13 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 					unless @$scope.center
 						@$scope.center = new angoolar.LatLng position.coords.latitude, position.coords.longitude
 
+		# * This will be called when the Google Maps API has been loaded, then:
+		# 	* setup all the substantive $watch's for the map's scope attributes
+		# 		* options - *this is the most important, because when the options is evaluated, then @optionsChanged will be called, and the map itself will be made.*
+		# 		* center - this will allow the user of the directive to both find out where the center of the map is, and update the center of the map.
+		# 		* zoom - ditto for the zoom of the map
+		# 		* bounds - ditto for the bounds of the map
+		# 		* currentLocation - this simply indicates whether or not the map's center should be changed to the current location whenever the browser's Geolocation changes (and only when it changes - so the user of the directive can still change the center of the map until the browser's location changes). Note too, that the map will always try to get the current location of the browser once to initialize its center to the user's current location upon loading; and that happens even without currentLocation being truthy.
 		mapsReady: =>
 			@$scope.$watch 'options',                  @optionsChanged, yes
 			@$scope.$watch 'center || options.center', @centerChanged
@@ -46,6 +144,7 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 			@$scope.$watch 'bounds || options.bounds', @boundsChanged
 			@$scope.$watch 'currentLocation',          @currentLocationChanged
 
+			# * This will be called when the Google Maps API has been loaded, then:
 			unwatchMap = @$scope.$watch ( => @map ), =>
 				if @map
 					unwatchMap()
