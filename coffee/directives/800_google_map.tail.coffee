@@ -102,19 +102,33 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 				unless ngRepeatMatches
 					return @$log.error ngRepeatErrorMessage + ngRepeatExpression
 				@ngRepeatItemGetter = @$parse ngRepeatMatches[ 2 ] or ngRepeatMatches[ 1 ]
-			# marker expression of the form "with marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_"
+			
+			# marker expression of the form `with marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_`
+			
 			# The following are all examples of valid marker expressions:
-			# ex01: "with marker options _marker_options_expression_ if _marker_condition_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_"
-			# ex02: "for _ng_repeat_expression_"
-			# ex03: "with marker for _ng_repeat_expression_"
-			# ex04: "with marker options _marker_options_expression_ for _ng_repeat_expression_"
-			# ex05: "with marker options _marker_options_expression_ if _marker_condition_expression_ for _ng_repeat_expression_"
-			# ex06: "with marker if _marker_condition_expression_ for _ng_repeat_expression_"
-			# ex07: "with marker with info window for _ng_repeat_expression_"
-			# ex08: "with marker with info window if _info_window_condition_expression_ for _ng_repeat_expression_"
-			# ex09: "with marker options _marker_options_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_"
-			# ex10: "with marker options _marker_options_expression_ with info window for _ng_repeat_expression_"
-			# ex11: "with marker options _marker_options_expression_ if _marker_condition_expression_ with info window for _ng_repeat_expression_"
+			
+			# ex01: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
+			
+			# ex02: `for _ng_repeat_expression_`
+			
+			# ex03: `with marker for _ng_repeat_expression_`
+			
+			# ex04: `with marker options _marker_options_expression_ for _ng_repeat_expression_`
+			
+			# ex05: `with marker options _marker_options_expression_ if _marker_condition_expression_ for _ng_repeat_expression_`
+			
+			# ex06: `with marker if _marker_condition_expression_ for _ng_repeat_expression_`
+			
+			# ex07: `with marker with info window for _ng_repeat_expression_`
+			
+			# ex08: `with marker with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
+			
+			# ex09: `with marker options _marker_options_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
+			
+			# ex10: `with marker options _marker_options_expression_ with info window for _ng_repeat_expression_`
+			
+			# ex11: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window for _ng_repeat_expression_`
+			
 			# etc.
 			
 			unless ngRepeatExpression

@@ -1,0 +1,8 @@
+{
+  "glob": [
+  	"README.md",
+  	"coffee/**/*",
+  	"templates/**/*"
+  ],
+  "github": true
+}
