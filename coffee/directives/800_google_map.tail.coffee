@@ -74,10 +74,11 @@
 # 	
 # 	</div>
 
+# ## The GoogleMap Directive
 angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 	$_name: 'GoogleMap'
 
-	# ### Transclude: true
+	# #### Transclude: true
 	# So we're transcluding.
 	transclude: yes
 
@@ -95,7 +96,7 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 		# boolean - if true, center will be updated to the browser's current location (if possible)
 		currentLocation: '=?'
 
-	# ### GoogleMapController
+	# ## The GoogleMap's Controller
 	controller: class GoogleMapController extends angoolar.BaseDirectiveController
 		$_name: 'GoogleMapController'
 
@@ -144,7 +145,9 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 			@$scope.$watch 'bounds || options.bounds', @boundsChanged
 			@$scope.$watch 'currentLocation',          @currentLocationChanged
 
-			# * This will be called when the Google Maps API has been loaded, then:
+			# * *¡Important!* This is where the map is really turned on: where we call *watchGoogleMapsExpression*, and:
+			#	* the hash of open info windows is initialized
+			#	* the map's click event listener that closes any open info windows is registered
 			unwatchMap = @$scope.$watch ( => @map ), =>
 				if @map
 					unwatchMap()
@@ -152,6 +155,7 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 					google.maps.event.addListener @map, 'click', @closeInfoWindows
 					@watchGoogleMapsExpression()
 
+		# #### Scope Attribute Listeners/Usage
 		optionsChanged: =>
 			unless @map
 				@map = new google.maps.Map @$element[ 0 ], angular.extend {}, @$defaultOptions, @$scope.options
@@ -175,11 +179,48 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 			else
 				@$currentPositionWatch?.$_clearWatch()
 
+		# ## The Meat of the GoogleMap
+		# ### The GoogleMap Expression Processing
+		# This regex will break down the GoogleMap expression down into all its parts.
 		wholeRegex = /^\s*(with\s+marker\s+(?:options\s+([\s\S]+?)\s+)?(?:if\s+([\s\S]+?)\s+)?)?(with\s+info\s+window\s+(?:if\s+([\s\S]+?)\s+)?)?for\s+([\s\S]+?)\s*$/
 		wholeErrorMessage = "Google Maps expression expected to be of the form '[with marker [options _marker_options_expression_] [if _marker_condition_expression_]] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_' but got: "
+		# These two regexes are for processing the ngRepeat expression; the reason we would need
+		# this is if the user of the directive decided not to use [with marker...] or [with info
+		# window...], which are optional for a reason: in that case, we want to just use the values
+		# iterated over by the ngRepeat expression *as* the marker options, and use info windows for
+		# each marker.
 		ngRepeatRegex = /^\s*([\s\S]+?)\s+in\s+([\s\S]+?)\s*$/
 		ngRepeatLhsRegex = /^(?:([\$\w]+)|\(([\$\w]+)\s*,\s*([\$\w]+)\))$/
 		ngRepeatErrorMessage = "'_item_' in '_item_ in _collection_' in '_ng_repeat_expression_' in 'marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_' should be an identifier or '(_key_, _value_)' expression, but got: "
+
+		# marker expression of the form `with marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_`
+		#
+		# The following are all examples of valid marker expressions:
+		#
+		# ex01: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
+		#
+		# ex02: `for _ng_repeat_expression_`
+		#
+		# ex03: `with marker for _ng_repeat_expression_`
+		#
+		# ex04: `with marker options _marker_options_expression_ for _ng_repeat_expression_`
+		#
+		# ex05: `with marker options _marker_options_expression_ if _marker_condition_expression_ for _ng_repeat_expression_`
+		#
+		# ex06: `with marker if _marker_condition_expression_ for _ng_repeat_expression_`
+		#
+		# ex07: `with marker with info window for _ng_repeat_expression_`
+		#
+		# ex08: `with marker with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
+		#
+		# ex09: `with marker options _marker_options_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
+		#
+		# ex10: `with marker options _marker_options_expression_ with info window for _ng_repeat_expression_`
+		#
+		# ex11: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window for _ng_repeat_expression_`
+		#
+		# etc.
+
 		watchGoogleMapsExpression: ->
 			expression = @$attrs[ GoogleMap::$_makeName() ]
 			return unless expression?.length
@@ -201,35 +242,7 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 				unless ngRepeatMatches
 					return @$log.error ngRepeatErrorMessage + ngRepeatExpression
 				@ngRepeatItemGetter = @$parse ngRepeatMatches[ 2 ] or ngRepeatMatches[ 1 ]
-			
-			# marker expression of the form `with marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_`
-			
-			# The following are all examples of valid marker expressions:
-			
-			# ex01: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
-			
-			# ex02: `for _ng_repeat_expression_`
-			
-			# ex03: `with marker for _ng_repeat_expression_`
-			
-			# ex04: `with marker options _marker_options_expression_ for _ng_repeat_expression_`
-			
-			# ex05: `with marker options _marker_options_expression_ if _marker_condition_expression_ for _ng_repeat_expression_`
-			
-			# ex06: `with marker if _marker_condition_expression_ for _ng_repeat_expression_`
-			
-			# ex07: `with marker with info window for _ng_repeat_expression_`
-			
-			# ex08: `with marker with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
-			
-			# ex09: `with marker options _marker_options_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
-			
-			# ex10: `with marker options _marker_options_expression_ with info window for _ng_repeat_expression_`
-			
-			# ex11: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window for _ng_repeat_expression_`
-			
-			# etc.
-			
+
 			unless ngRepeatExpression
 				return @$log.error wholeErrorMessage + expression
 
