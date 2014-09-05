@@ -233,7 +233,29 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                         "title": "The GoogleMap Expression Processing",
                         "slug": "the-googlemap-expression-processing"
                       },
-                      "depth": 3
+                      "depth": 3,
+                      "children": [
+                        {
+                          "type": "heading",
+                          "data": {
+                            "level": 4,
+                            "title": "Create the template element",
+                            "slug": "create-the-template-element"
+                          },
+                          "depth": 4,
+                          "children": [
+                            {
+                              "type": "heading",
+                              "data": {
+                                "level": 5,
+                                "title": "Note: Why create this child scope of the parent scope?",
+                                "slug": "note-why-create-this-child-scope-of-the-parent-scope"
+                              },
+                              "depth": 5
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -337,7 +359,29 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                     "title": "The GoogleMap Expression Processing",
                     "slug": "the-googlemap-expression-processing"
                   },
-                  "depth": 3
+                  "depth": 3,
+                  "children": [
+                    {
+                      "type": "heading",
+                      "data": {
+                        "level": 4,
+                        "title": "Create the template element",
+                        "slug": "create-the-template-element"
+                      },
+                      "depth": 4,
+                      "children": [
+                        {
+                          "type": "heading",
+                          "data": {
+                            "level": 5,
+                            "title": "Note: Why create this child scope of the parent scope?",
+                            "slug": "note-why-create-this-child-scope-of-the-parent-scope"
+                          },
+                          "depth": 5
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
