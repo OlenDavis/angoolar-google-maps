@@ -129,10 +129,149 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "projectPath": "coffee/directives/800_google_map.tail.coffee",
             "targetPath": "directives/800_google_map.tail",
             "pageTitle": "directives/800_google_map.tail",
-            "title": "800_google_map.tail"
+            "firstHeader": {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "GoogleMap",
+                "slug": "googlemap",
+                "isFileHeader": true
+              },
+              "depth": 1,
+              "children": [
+                {
+                  "type": "heading",
+                  "data": {
+                    "level": 2,
+                    "title": "Example Usage (address-input.html)",
+                    "slug": "example-usage-address-inputhtml"
+                  },
+                  "depth": 2,
+                  "children": [
+                    {
+                      "type": "heading",
+                      "data": {
+                        "level": 3,
+                        "title": "Transclude: true",
+                        "slug": "transclude-true"
+                      },
+                      "depth": 3
+                    }, {
+                      "type": "heading",
+                      "data": {
+                        "level": 3,
+                        "title": "Scope Attributes",
+                        "slug": "scope-attributes"
+                      },
+                      "depth": 3
+                    }, {
+                      "type": "heading",
+                      "data": {
+                        "level": 3,
+                        "title": "GoogleMapController",
+                        "slug": "googlemapcontroller"
+                      },
+                      "depth": 3,
+                      "children": [
+                        {
+                          "type": "heading",
+                          "data": {
+                            "level": 4,
+                            "title": "Injected Angular Dependencies",
+                            "slug": "injected-angular-dependencies"
+                          },
+                          "depth": 4
+                        }, {
+                          "type": "heading",
+                          "data": {
+                            "level": 4,
+                            "title": "Map Default Options",
+                            "slug": "map-default-options"
+                          },
+                          "depth": 4
+                        }, {
+                          "type": "heading",
+                          "data": {
+                            "level": 4,
+                            "title": "Controller Initialization",
+                            "slug": "controller-initialization"
+                          },
+                          "depth": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "title": "GoogleMap"
           },
           "depth": 2,
-          "outline": []
+          "outline": [
+            {
+              "type": "heading",
+              "data": {
+                "level": 2,
+                "title": "Example Usage (address-input.html)",
+                "slug": "example-usage-address-inputhtml"
+              },
+              "depth": 2,
+              "children": [
+                {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "Transclude: true",
+                    "slug": "transclude-true"
+                  },
+                  "depth": 3
+                }, {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "Scope Attributes",
+                    "slug": "scope-attributes"
+                  },
+                  "depth": 3
+                }, {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "GoogleMapController",
+                    "slug": "googlemapcontroller"
+                  },
+                  "depth": 3,
+                  "children": [
+                    {
+                      "type": "heading",
+                      "data": {
+                        "level": 4,
+                        "title": "Injected Angular Dependencies",
+                        "slug": "injected-angular-dependencies"
+                      },
+                      "depth": 4
+                    }, {
+                      "type": "heading",
+                      "data": {
+                        "level": 4,
+                        "title": "Map Default Options",
+                        "slug": "map-default-options"
+                      },
+                      "depth": 4
+                    }, {
+                      "type": "heading",
+                      "data": {
+                        "level": 4,
+                        "title": "Controller Initialization",
+                        "slug": "controller-initialization"
+                      },
+                      "depth": 4
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     }, {

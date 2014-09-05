@@ -1,52 +1,133 @@
-<!DOCTYPE html><html lang="en"><head><title>directives/800_google_map.tail</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="directives/800_google_map.tail"><meta name="groc-project-path" content="coffee/directives/800_google_map.tail.coffee"><meta name="groc-github-url" content="https://github.com/OlenDavis/angoolar-google-maps"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/OlenDavis/angoolar-google-maps/blob/master/coffee/directives/800_google_map.tail.coffee">coffee/directives/800_google_map.tail.coffee</a></div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nx">angoolar</span><span class="p">.</span><span class="nx">addDirective</span> <span class="k">class</span> <span class="nx">GoogleMap</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirective</span>
-  <span class="nv">$_name: </span><span class="s">&#39;GoogleMap&#39;</span>
+<!DOCTYPE html><html lang="en"><head><title>directives/800_google_map.tail</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="directives/800_google_map.tail"><meta name="groc-project-path" content="coffee/directives/800_google_map.tail.coffee"><meta name="groc-github-url" content="https://github.com/OlenDavis/angoolar-google-maps"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path"><a href="https://github.com/OlenDavis/angoolar-google-maps/blob/master/coffee/directives/800_google_map.tail.coffee">coffee/directives/800_google_map.tail.coffee</a></div></div><div id="document"><div class="segment"><div class="comments "><div class="wrapper"><h1 id="googlemap">GoogleMap</h1>
 
-  <span class="nv">transclude: </span><span class="kc">yes</span>
+<h2 id="example-usage-address-inputhtml">Example Usage (address-input.html)</h2>
 
-  <span class="nv">scope:</span>
+<pre><code>&lt;div&gt;
+
+    &lt;div
+        t-lookahead-input  ="result in AddressInputController.$results"
+        placeholder        ="{{ placeholder }}"
+        items-changing     ="AddressInputController.searching"
+        input-value        ="query"
+        track-by           ="result.geometry.location.toString()"
+        on-selected        ="AddressInputController.select( result )"
+        is-focused         ="isFocused"
+        item-active        ="resultActive({ result: result })"
+        current-item       ="AddressInputController.$currentResult"
+        input-class        ="'t-rounded'"
+        hide-when-selected ="true"
+        name               ="{{ name }}"
+        ng-model-options   ="{
+            updateOn: 'default blur',
+            debounce: {
+                default: 500,
+                blur   : 0
+            }
+        }"
+    &gt;
+        &lt;div class="less lr-padded"&gt;
+
+            &lt;span ng-if="result.formatted_address"&gt;
+                {{ result.formatted_address }}
+            &lt;/span&gt;
+
+            &lt;span
+                class ="italic light-weight"
+                ng-if ="! result.formatted_address"
+            &gt;
+                No Address ({{ result.geometry.location.lat() }}, {{ result.geometry.location.lng() }})
+            &lt;/span&gt;
+
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div
+        class="shallow-shadow"
+
+        t-fixed-proportion-div
+        ratio-width  ="{{ ratioWidth }}"
+        ratio-height ="{{ ratioHeight }}"
+    &gt;
+        &lt;div
+            class        ="absolute tl whole-width whole-height"
+            center       ="AddressInputController.$currentResult.geometry.location"
+            t-google-map ="
+                with marker options AddressInputController.getMarkerOptions( result )
+                with info window
+                for result in AddressInputController.$results track by AddressInputController.getTrackBy( result )
+            "
+        &gt;
+            &lt;span ng-click="AddressInputController.select( result )"&gt;
+
+                &lt;span ng-if="result.formatted_address"&gt;
+                    {{ result.formatted_address }}
+                &lt;/span&gt;
+
+                &lt;span
+                    class ="italic light-weight"
+                    ng-if ="! result.formatted_address"
+                &gt;
+                    No Address ({{ result.geometry.location.lat() }}, {{ result.geometry.location.lng() }})
+                &lt;/span&gt;
+
+            &lt;/span&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+&lt;/div&gt;
+</code></pre></div></div><div class="code"><div class="wrapper"><span class="nx">angoolar</span><span class="p">.</span><span class="nx">addDirective</span> <span class="k">class</span> <span class="nx">GoogleMap</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirective</span>
+  <span class="nv">$_name: </span><span class="s">&#39;GoogleMap&#39;</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><h3 id="transclude-true">Transclude: true</h3>
+
+<p>So we're transcluding.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">transclude: </span><span class="kc">yes</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><h3 id="scope-attributes">Scope Attributes</h3>
+
+<p>All these scope attributes are just gravy; not really necessary or integral to the meat and
+bones of the directive. More could and should be added, or they could all be eliminated for
+simplicity's sake.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">scope:</span>
     <span class="nv">apiKey         : </span><span class="s">&#39;@&#39;</span>
-    <span class="nv">options        : </span><span class="s">&quot;=?&quot;</span>
-    <span class="nv">center         : </span><span class="s">&#39;=?&#39;</span> <span class="c1"># must be an instance of either google.maps.LatLng or angoolar.LatLng</span>
+    <span class="nv">options        : </span><span class="s">&quot;=?&quot;</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>must be an instance of either google.maps.LatLng or angoolar.LatLng</p></div></div><div class="code"><div class="wrapper">    <span class="nv">center         : </span><span class="s">&#39;=?&#39;</span>
     <span class="nv">zoom           : </span><span class="s">&#39;=?&#39;</span>
-    <span class="nv">bounds         : </span><span class="s">&#39;=?&#39;</span>
-    <span class="nv">currentLocation: </span><span class="s">&#39;=?&#39;</span> <span class="c1"># boolean - if true, center will be updated to the browser&#39;s current location (if possible)</span>
-
-  <span class="nv">controller: </span><span class="k">class</span> <span class="nx">GoogleMapController</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirectiveController</span>
-    <span class="nv">$_name: </span><span class="s">&#39;GoogleMapController&#39;</span>
-
-    <span class="nv">$_dependencies: </span><span class="p">[</span>
+    <span class="nv">bounds         : </span><span class="s">&#39;=?&#39;</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>boolean - if true, center will be updated to the browser's current location (if possible)</p></div></div><div class="code"><div class="wrapper">    <span class="nv">currentLocation: </span><span class="s">&#39;=?&#39;</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><h3 id="googlemapcontroller">GoogleMapController</h3></div></div></div><div class="segment"><div class="code"><div class="wrapper">  <span class="nv">controller: </span><span class="k">class</span> <span class="nx">GoogleMapController</span> <span class="k">extends</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">BaseDirectiveController</span>
+    <span class="nv">$_name: </span><span class="s">&#39;GoogleMapController&#39;</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><h4 id="injected-angular-dependencies">Injected Angular Dependencies</h4></div></div></div><div class="segment"><div class="code"><div class="wrapper">    <span class="nv">$_dependencies: </span><span class="p">[</span>
       <span class="s">&#39;$q&#39;</span>
       <span class="s">&#39;$log&#39;</span>
       <span class="s">&#39;$compile&#39;</span>
       <span class="s">&#39;$parse&#39;</span>
       <span class="nx">angoolar</span><span class="p">.</span><span class="nx">GoogleMapsApi</span>
       <span class="nx">angoolar</span><span class="p">.</span><span class="nx">Geolocation</span>
-    <span class="p">]</span>
-
-    <span class="nv">$defaultOptions:</span>
+    <span class="p">]</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><h4 id="map-default-options">Map Default Options</h4></div></div></div><div class="segment"><div class="code"><div class="wrapper">    <span class="nv">$defaultOptions:</span>
       <span class="nv">center: </span><span class="k">new</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span> <span class="mf">34.0364327</span><span class="p">,</span> <span class="o">-</span><span class="mf">118.329335</span> <span class="c1"># Los Angeles, CA</span>
-      <span class="nv">zoom  : </span><span class="mi">10</span>
+      <span class="nv">zoom  : </span><span class="mi">10</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><h4 id="controller-initialization">Controller Initialization</h4>
 
-    <span class="nv">constructor: </span><span class="nf">-&gt;</span>
+<ul>
+<li>First, we wait for the apiKey
+<ul><li>only the first time (since we can't load the API multiple times)</li></ul></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nv">constructor: </span><span class="nf">-&gt;</span>
       <span class="k">super</span>
 
-      <span class="nv">unwatchApiKey = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;apiKey&#39;</span><span class="p">,</span> <span class="o">=&gt;</span>
-        <span class="nx">@GoogleMapsApi</span><span class="p">.</span><span class="nx">initialize</span> <span class="nx">@mapsReady</span><span class="p">,</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">apiKey</span>
+      <span class="nv">unwatchApiKey = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;apiKey&#39;</span><span class="p">,</span> <span class="o">=&gt;</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><ul>
+<li>This will call @mapsReady when the API has been loaded</li>
+</ul></div></div><div class="code"><div class="wrapper">        <span class="nx">@GoogleMapsApi</span><span class="p">.</span><span class="nx">initialize</span> <span class="nx">@mapsReady</span><span class="p">,</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">apiKey</span>
         <span class="nx">unwatchApiKey</span><span class="p">()</span>
 
         <span class="nv">defaultPositionWatch = </span><span class="nx">@Geolocation</span><span class="p">.</span><span class="nx">watchPosition</span> <span class="nf">( position ) =&gt;</span>
           <span class="nx">defaultPositionWatch</span><span class="p">.</span><span class="nx">$_clearWatch</span><span class="p">()</span>
           <span class="k">unless</span> <span class="nx">@$scope</span><span class="p">.</span><span class="nx">center</span>
-            <span class="vi">@$scope.center = </span><span class="k">new</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">latitude</span><span class="p">,</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">longitude</span>
-
-    <span class="nv">mapsReady: </span><span class="o">=&gt;</span>
+            <span class="vi">@$scope.center = </span><span class="k">new</span> <span class="nx">angoolar</span><span class="p">.</span><span class="nx">LatLng</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">latitude</span><span class="p">,</span> <span class="nx">position</span><span class="p">.</span><span class="nx">coords</span><span class="p">.</span><span class="nx">longitude</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><ul>
+<li>This will be called when the Google Maps API has been loaded, then:
+<ul><li>setup all the substantive $watch's for the map's scope attributes
+<ul><li>options - <em>this is the most important, because when the options is evaluated, then @optionsChanged will be called, and the map itself will be made.</em></li>
+<li>center - this will allow the user of the directive to both find out where the center of the map is, and update the center of the map.</li>
+<li>zoom - ditto for the zoom of the map</li>
+<li>bounds - ditto for the bounds of the map</li>
+<li>currentLocation - this simply indicates whether or not the map's center should be changed to the current location whenever the browser's Geolocation changes (and only when it changes - so the user of the directive can still change the center of the map until the browser's location changes). Note too, that the map will always try to get the current location of the browser once to initialize its center to the user's current location upon loading; and that happens even without currentLocation being truthy.</li></ul></li></ul></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nv">mapsReady: </span><span class="o">=&gt;</span>
       <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;options&#39;</span><span class="p">,</span>                  <span class="nx">@optionsChanged</span><span class="p">,</span> <span class="kc">yes</span>
       <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;center || options.center&#39;</span><span class="p">,</span> <span class="nx">@centerChanged</span>
       <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;zoom   || options.zoom&#39;</span><span class="p">,</span>   <span class="nx">@zoomChanged</span>
       <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;bounds || options.bounds&#39;</span><span class="p">,</span> <span class="nx">@boundsChanged</span>
-      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;currentLocation&#39;</span><span class="p">,</span>          <span class="nx">@currentLocationChanged</span>
-
-      <span class="nv">unwatchMap = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@map</span> <span class="p">),</span> <span class="o">=&gt;</span>
+      <span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="s">&#39;currentLocation&#39;</span><span class="p">,</span>          <span class="nx">@currentLocationChanged</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><ul>
+<li>This will be called when the Google Maps API has been loaded, then:</li>
+</ul></div></div><div class="code"><div class="wrapper">      <span class="nv">unwatchMap = </span><span class="nx">@$scope</span><span class="p">.</span><span class="nx">$watch</span> <span class="p">(</span> <span class="o">=&gt;</span> <span class="nx">@map</span> <span class="p">),</span> <span class="o">=&gt;</span>
         <span class="k">if</span> <span class="nx">@map</span>
           <span class="nx">unwatchMap</span><span class="p">()</span>
           <span class="vi">@$openInfoWindows = </span><span class="k">new</span> <span class="nb">Array</span><span class="p">()</span>
