@@ -194,31 +194,31 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 		ngRepeatErrorMessage = "'_item_' in '_item_ in _collection_' in '_ng_repeat_expression_' in 'marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_' should be an identifier or '(_key_, _value_)' expression, but got: "
 
 		# marker expression of the form `with marker [options _marker_options_expression_] [if _marker_condition_expression_] [with info window [if _info_window_condition_expression_]] for _ng_repeat_expression_`
-		#
+
 		# The following are all examples of valid marker expressions:
-		#
+
 		# ex01: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
-		#
+
 		# ex02: `for _ng_repeat_expression_`
-		#
+
 		# ex03: `with marker for _ng_repeat_expression_`
-		#
+
 		# ex04: `with marker options _marker_options_expression_ for _ng_repeat_expression_`
-		#
+
 		# ex05: `with marker options _marker_options_expression_ if _marker_condition_expression_ for _ng_repeat_expression_`
-		#
+
 		# ex06: `with marker if _marker_condition_expression_ for _ng_repeat_expression_`
-		#
+
 		# ex07: `with marker with info window for _ng_repeat_expression_`
-		#
+
 		# ex08: `with marker with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
-		#
+
 		# ex09: `with marker options _marker_options_expression_ with info window if _info_window_condition_expression_ for _ng_repeat_expression_`
-		#
+
 		# ex10: `with marker options _marker_options_expression_ with info window for _ng_repeat_expression_`
-		#
+
 		# ex11: `with marker options _marker_options_expression_ if _marker_condition_expression_ with info window for _ng_repeat_expression_`
-		#
+
 		# etc.
 
 		watchGoogleMapsExpression: ->
@@ -246,6 +246,11 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 			unless ngRepeatExpression
 				return @$log.error wholeErrorMessage + expression
 
+			# ### *The Reuse of ngRepeat*
+			# #### Create the template element
+
+			# Note that we just use good, old, simple string concatenation to put the ngRepeat part
+			# of the GoogleMap expression in the ng-repeat directive.
 			@$element.append $googleMapsContentsElement = angular.element """
 			<div
 				style     ='display:none!important'
@@ -254,6 +259,13 @@ angoolar.addDirective class GoogleMap extends angoolar.BaseDirective
 				<div #{ angoolar.camelToDashes GoogleMapContent::$_makeName() }></div>
 			</div>
 			"""
+			# Here's a whole slew of Coffeescript tomfoolery to:
+			# * compile the template to get the linking function, and immediately
+			# * link it to the template element we've already appended to this directive's element, while
+			# * saving the new child scope of the parent scope we've created for all the marker/info window processing
+			# ##### Note: Why create this child scope of the parent scope?
+			# Because we want to easily deregister everything we've created when this directive is
+			# destroyed. It's perhaps overkill on second thought.
 			@$compile( $googleMapsContentsElement ) googleMapsContentsScope = @$scope.$parent.$new()
 
 			@$scope.$on '$destroy', => googleMapsContentsScope.$destroy()
